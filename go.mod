@@ -1,3 +1,3 @@
-module github.com/RahatMelsov/mansProducts
+module github.com/rtmelsov/mansProducts
 
 go 1.21.5
