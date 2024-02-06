@@ -7,25 +7,45 @@ import (
 	"net/http"
 	"path/filepath"
 	"text/template"
+
+	"github.com/rtmelsov/mansProducts/pkg/config"
+	"github.com/rtmelsov/mansProducts/pkg/models"
 )
 
 var functions = template.FuncMap{}
+var app *config.AppConfig
+
+// NewTemplates gets new templates from the application config
+func NewTemplates(a *config.AppConfig) {
+	app = a
+}
+
+func GetDefaultTemplateData(td *models.TemplateData) *models.TemplateData {
+	return td
+}
 
 // RenderTemplate render templates using html/templates
-func RenderTemplate(w http.ResponseWriter, path string) {
-	tc, err := CreateTemplateCache()
-	if err != nil {
-		log.Fatal(err)
+func RenderTemplate(w http.ResponseWriter, path string, td *models.TemplateData) {
+	var tc map[string]*template.Template
+	if app.UseCache {
+		tc = app.TemplateCache
+	} else {
+		var err error
+		tc, err = CreateTemplateCache()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	t, ok := tc[path]
 	if !ok {
-		fmt.Println("Parsing template error: ", err)
+		fmt.Println("Parsing template error")
 		return
 	}
 	buf := new(bytes.Buffer)
-	_ = t.Execute(buf, nil)
+	td = GetDefaultTemplateData(td)
+	_ = t.Execute(buf, td)
 
-	_, err = buf.WriteTo(w)
+	_, err := buf.WriteTo(w)
 
 	if err != nil {
 		fmt.Println("Error write tempalate to browser", err)
